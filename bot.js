@@ -11,8 +11,10 @@
 var randomAdviseRegExp = /^[\w\s]+\?\s\#\@\)\₴\?\$0$/;
 var weatherRegExp = /^What\sis\sthe\sweather\s\w+\s?\w+\sin\s\w+\?$/;
 var moneyExchangeRegExp = /^Convert\s\d+\s*(dollar|euro|hryvnia)\sto\s(dollar|euro|hryvnia)$/;
-var saveNoteRegExp = /^Save\snote\stitle\:\s?[\w\s]+,\sbody\:\s?[\w\s]+/;
+var saveNoteRegExp = /^Save\snote\stitle\:\s?.+,\sbody\:\s?.+/;
 var showNotesRegExp = /^Show\snote\slist$/;
+var showNoteByTitleRegExp = /^Show\snote\s.+/;
+var deleteNoteRegExp = /^Delete\snote\s.+/;
 
 if(msg.text.startsWith('@bot ')) {
     var msgText = msg.text.split(/^\@bot\s+/)[1];
@@ -107,7 +109,62 @@ if(msg.text.startsWith('@bot ')) {
 
 
 }
-    
+else if(showNoteByTitleRegExp.test(msgText)){      
+  
+    var noteTitleFilter = (message) =>{
+        return message.split(/^Show\snote\s/)[1];
+        ;}
+       
+    var title = noteTitleFilter(msgText);
+    var credentials = {
+     name: msg.name,
+     nickName: msg.nickName
+    }
+ 
+   noteService.findOne(title, credentials, (err, data)=>{ 
+       
+   var listOfNotes =  `Title: ${data.title} Body: ${data.body}\n`;    
+ 
+   var timestamp =  new Date();
+   var response = {
+   name: "Bot",
+   nickName: "bot",
+   text: `${listOfNotes} \nNote command is processed`,
+   'timestamp': timestamp
+   };
+   socket.emit('chat message', response);    
+   });
+ 
+ 
+ }
+
+ else if(deleteNoteRegExp.test(msgText)){      
+
+    var noteDeleteTitleFilter = (message) =>{
+        return message.split(/^Delete\snote\s/)[1];
+        ;}
+       
+    var title = noteDeleteTitleFilter(msgText);
+
+    var credentials = {
+     name: msg.name,
+     nickName: msg.nickName
+    }
+ 
+   noteService.deleteOne(title, credentials, (err, data)=>{    
+ 
+   var timestamp =  new Date();
+   var response = {
+   name: "Bot",
+   nickName: "bot",
+   text: `Note command is processed. Note is deleted`,
+   'timestamp': timestamp
+   };
+   socket.emit('chat message', response);    
+   });
+ 
+ 
+ }
 
 
     else if (msgText == 'show quote'){
