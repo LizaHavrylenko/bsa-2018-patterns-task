@@ -1,4 +1,5 @@
  
+  var noteService =  require ("./chatbot-mongoose/services/note");
   function chatBot(msg, socket){  //Facade pattern
 
     
@@ -11,6 +12,7 @@ var randomAdviseRegExp = /^[\w\s]+\?\s\#\@\)\₴\?\$0$/;
 var weatherRegExp = /^What\sis\sthe\sweather\s\w+\s?\w+\sin\s\w+\?$/;
 var moneyExchangeRegExp = /^Convert\s\d+\s*(dollar|euro|hryvnia)\sto\s(dollar|euro|hryvnia)$/;
 var saveNoteRegExp = /^Save\snote\stitle\:\s?[\w\s]+,\sbody\:\s?[\w\s]+/;
+var showNotesRegExp = /^Show\snote\slist$/;
 
 if(msg.text.startsWith('@bot ')) {
     var msgText = msg.text.split(/^\@bot\s+/)[1];
@@ -61,7 +63,14 @@ if(msg.text.startsWith('@bot ')) {
             ;}
            
    var noteParams = noteFilter(msgText);
-   
+
+   var noteRecord = {
+       name: msg.name,
+       nickName: msg.nickName,
+       title: noteParams[0],
+       body: noteParams[1]
+   }
+   noteService.addOne(noteRecord, (err, data)=>{   
    var timestamp =  new Date();
    var data = {
    name: "Bot",
@@ -69,11 +78,35 @@ if(msg.text.startsWith('@bot ')) {
    text: 'Note command is processed',
    'timestamp': timestamp
    };
+   socket.emit('chat message', data);    
+   });
     
-   socket.emit('chat message', data); 
-   
  }
-        
+      
+ else if(showNotesRegExp.test(msgText)){      
+  
+
+   var credentials = {
+    name: msg.name,
+    nickName: msg.nickName
+   }
+
+  noteService.findAll(credentials, (err, data)=>{ 
+      
+  var listOfNotes = data.map((element)=>{return `Title: ${element.title} Body: ${element.body}`}).join('\n');    
+
+  var timestamp =  new Date();
+  var response = {
+  name: "Bot",
+  nickName: "bot",
+  text: `${listOfNotes} \nNote command is processed`,
+  'timestamp': timestamp
+  };
+  socket.emit('chat message', response);    
+  });
+
+
+}
     
 
 

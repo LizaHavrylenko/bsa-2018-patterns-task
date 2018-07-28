@@ -1,11 +1,24 @@
 var chatBot = require('./bot'); 
 
 var app = require('express')();
+const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
+const mongooseConnection = require("./chatbot-mongoose/db/dbconnect").connection;
 var http = require('http').Server(app);
 var io = require('socket.io')(http); 
 var allMessages = [];
 var allUsers = [];
- 
+
+app.use(
+    session({
+      secret: "sessionsecretsessionsecret",
+      resave: true,
+      saveUninitialized: true,
+      store: new MongoStore({
+        mongooseConnection: mongooseConnection
+      })
+    })
+  );
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
